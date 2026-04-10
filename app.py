@@ -10,35 +10,33 @@ TOKEN = "SVdVRTRSQmiGX4FWYJJzgF-Hi4mHX41TglBhWVtieEOEUHhleGFy"
 TEAM_FILE = "Numbers_Export.csv"
 LOG_FILE = "otp_history_log.csv"
 
-# Browser Tab Configuration
 st.set_page_config(page_title="UMER ALI - LIVE OTP", layout="centered")
 
-# --- CUSTOM CSS FOR STYLING ---
+# --- STYLING ---
 st.markdown("""
-    <style>
+<style>
     .stApp { background-color: #0e1117; }
     .otp-card {
         border: 2px solid #ff4b4b;
         border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 15px;
+        padding: 15px;
+        margin-bottom: 10px;
         background-color: #161b22;
     }
-    .owner-name { color: #ff4b4b; font-size: 22px; font-weight: bold; }
-    .otp-code { color: #00ff00; font-size: 24px; font-family: monospace; font-weight: bold; }
-    .footer { text-align: center; color: #8b949e; margin-top: 50px; font-size: 14px; }
-    </style>
-    """, unsafe_allow_html=True)
+    .owner-name { color: #ff4b4b; font-size: 20px; font-weight: bold; }
+    .otp-code { color: #00ff00; font-size: 22px; font-weight: bold; font-family: monospace; }
+</style>
+""", unsafe_allow_html=True)
 
-# --- FUNCTIONS ---
+# --- LOGIC ---
 def load_team_data():
-    try:
-        if os.path.exists(TEAM_FILE):
+    if os.path.exists(TEAM_FILE):
+        try:
             df = pd.read_csv(TEAM_FILE)
             df = df[df['Status'].str.contains("Allocated:", na=False)].copy()
             df['Owner'] = df['Status'].str.replace("Allocated:", "").str.strip()
             return df
-    except: pass
+        except: pass
     return pd.DataFrame()
 
 def save_to_log(entry):
@@ -50,22 +48,20 @@ def save_to_log(entry):
 
 def get_history():
     if os.path.exists(LOG_FILE):
-        try:
-            return pd.read_csv(LOG_FILE).to_dict('records')
+        try: return pd.read_csv(LOG_FILE).to_dict('records')
         except: return []
     return []
 
-# --- MAIN UI ---
+# --- UI ---
 st.markdown("<h1 style='text-align: center; color: #ff4b4b;'>🔥 PINDIZ PRIVATE MONITOR</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; font-size: 18px; color: white;'>Powered by <b>Umer Ali</b></p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-size: 18px;'>Powered by <b>Umer Ali</b></p>", unsafe_allow_html=True)
 st.markdown("---")
 
 team_df = load_team_data()
 
 if team_df.empty:
-    st.error("Numbers_Export.csv nahi mili ya format sahi nahi hai!")
+    st.error("Numbers_Export.csv missing or format error!")
 else:
-    # Local memory initialize
     if 'history' not in st.session_state:
         st.session_state.history = get_history()[::-1]
 
@@ -77,7 +73,6 @@ else:
             if r.status_code == 200:
                 api_data = r.json().get("data", [])
                 team_nums = team_df['Phone Number'].astype(str).tolist()
-                
                 existing_ids = [str(x.get('id','')) for x in st.session_state.history]
                 
                 for msg in api_data:
@@ -86,7 +81,6 @@ else:
                     
                     if num in team_nums and m_id not in existing_ids:
                         row = team_df[team_df['Phone Number'].astype(str) == num].iloc[0]
-                        
                         entry = {
                             "id": m_id,
                             "owner": row['Owner'].upper(),
@@ -99,171 +93,24 @@ else:
                         save_to_log(entry)
                         st.session_state.history.insert(0, entry)
 
-                # Display Cards
                 with placeholder.container():
                     if not st.session_state.history:
-                        st.info("Searching for Team OTPs... System is Live.")
+                        st.info("Searching for OTPs... System Live")
                     else:
-                        for item in st.session_state.history[:40]: # Show last 40
+                        for item in st.session_state.history[:40]:
                             st.markdown(f"""
                             <div class="otp-card">
                                 <div class="owner-name">👤 {item['owner']}</div>
-                                <div style="color: #e6edf3; margin-bottom: 10px;"><b>RANGE:</b> {item['range']}</div>
+                                <div style="color:white;"><b>RANGE:</b> {item['range']}</div>
                                 <div class="otp-code">OTP: {item['otp']}</div>
-                                <div style="color: #8b949e; margin-top: 10px;">
-                                    <b>APP:</b> {item['app']} | <b>NUM:</b> {item['num']}<br>
-                                    <small>🕒 {item['time']}</small>
+                                <div style="color:#8b949e; font-size:12px;">
+                                    App: {item['app']} | Num: {item['num']} | {item['time']}
                                 </div>
                             </div>
                             """, unsafe_allow_html=True)
             
-            # Footer always at bottom of the list
-            st.markdown("<div class='footer'>© 2026 | Developed with ❤️ by Umer Ali</div>", unsafe_allow_html=True)
-            
             time.sleep(10)
             st.rerun()
         except:
             time.sleep(5)
-                            "otp": msg.get('message'),
-                            "num": num,
-                            "time": msg.get('dt')
-                        }
-                        # File aur State dono mein save karo
-                        save_otp_to_file(entry)
-                        st.session_state.history.insert(0, entry)
-
-                # Display Logic
-                with placeholder.container():
-                    for item in st.session_state.history[:30]: # Top 30 OTPs
-                        st.markdown(f"### 👤 {item['owner']}")
-                        st.success(f"**OTP: {item['otp']}**")
-                        st.info(f"App: {item['app']} | Range: {item['range']}")
-                        st.caption(f"Number: {item['num']} | Time: {item['time']}")
-                        st.divider()
-
-            time.sleep(10)
-            st.rerun()
-        except:
-            time.sleep(5)
-            df = pd.read_csv(TEAM_FILE)
-            df = df[df['Status'].str.contains("Allocated:", na=False)].copy()
-            df['Owner'] = df['Status'].str.replace("Allocated:", "").str.strip()
-            return df
-    except: pass
-    return pd.DataFrame()
-
-def save_to_log(entry):
-    df_new = pd.DataFrame([entry])
-    if not os.path.isfile(LOG_FILE):
-        df_new.to_csv(LOG_FILE, index=False)
-    else:
-        df_new.to_csv(LOG_FILE, mode='a', header=False, index=False)
-
-def get_history():
-    if os.path.exists(LOG_FILE):
-        try:
-            return pd.read_csv(LOG_FILE).to_dict('records')
-        except: return []
-    return []
-
-# --- MAIN UI ---
-st.markdown("<h1 style='text-align: center; color: #ff4b4b;'>🔥 PINDIZ PRIVATE MONITOR</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; font-size: 18px; color: white;'>Powered by <b>Umer Ali</b></p>", unsafe_allow_html=True)
-st.markdown("---")
-
-team_df = load_team_data()
-
-if team_df.empty:
-    st.error("Numbers_Export.csv nahi mili ya format sahi nahi hai!")
-else:
-    # Local memory initialize
-    if 'history' not in st.session_state:
-        st.session_state.history = get_history()[::-1]
-
-    placeholder = st.empty()
-
-    while True:
-        try:
-            r = requests.get(URL, params={"token": TOKEN, "records": 25})
-            if r.status_code == 200:
-                api_data = r.json().get("data", [])
-                team_nums = team_df['Phone Number'].astype(str).tolist()
-                
-                existing_ids = [str(x.get('id','')) for x in st.session_state.history]
-                
-                for msg in api_data:
-                    num = str(msg.get('num'))
-                    m_id = f"{msg.get('dt')}-{num}"
-                    
-                    if num in team_nums and m_id not in existing_ids:
-                        row = team_df[team_df['Phone Number'].astype(str) == num].iloc[0]
-                        
-                        entry = {
-                            "id": m_id,
-                            "owner": row['Owner'].upper(),
-                            "range": row['Range'],
-                            "app": msg.get('cli'),
-                            "otp": msg.get('message'),
-                            "num": num,
-                            "time": msg.get('dt')
-                        }
-                        save_to_log(entry)
-                        st.session_state.history.insert(0, entry)
-
-                # Display Cards
-                with placeholder.container():
-                    if not st.session_state.history:
-                        st.info("Searching for Team OTPs... System is Live.")
-                    else:
-                        for item in st.session_state.history[:40]: # Show last 40
-                            st.markdown(f"""
-                            <div class="otp-card">
-                                <div class="owner-name">👤 {item['owner']}</div>
-                                <div style="color: #e6edf3; margin-bottom: 10px;"><b>RANGE:</b> {item['range']}</div>
-                                <div class="otp-code">OTP: {item['otp']}</div>
-                                <div style="color: #8b949e; margin-top: 10px;">
-                                    <b>APP:</b> {item['app']} | <b>NUM:</b> {item['num']}<br>
-                                    <small>🕒 {item['time']}</small>
-                                </div>
-                            </div>
-                            """, unsafe_allow_html=True)
             
-            # Footer always at bottom of the list
-            st.markdown("<div class='footer'>© 2026 | Developed with ❤️ by Umer Ali</div>", unsafe_allow_html=True)
-            
-            time.sleep(10)
-            st.rerun()
-        except:
-            time.sleep(5)
-else:
-    while True:
-        try:
-            r = requests.get(URL, params={"token": TOKEN, "records": 30})
-            if r.status_code == 200:
-                api_data = r.json().get("data", [])
-                team_numbers = team_df['Phone Number'].astype(str).tolist()
-                
-                with placeholder.container():
-                    found = False
-                    for msg in api_data:
-                        num = str(msg.get('num'))
-                        if num in team_numbers:
-                            found = True
-                            row = team_df[team_df['Phone Number'].astype(str) == num].iloc[0]
-                            
-                            # Team Member Card
-                            with st.container():
-                                st.markdown(f"### 👤 {row['Owner'].upper()}")
-                                st.code(f"OTP: {msg.get('message')}", language="text")
-                                st.info(f"App: {msg.get('cli')} | Range: {row['Range']}")
-                                st.caption(f"Number: {num} | Time: {msg.get('dt')}")
-                                st.divider()
-                    
-                    if not found:
-                        st.info("Searching for team OTPs... No live data found yet.")
-            
-            time.sleep(10)
-            st.rerun()
-        except:
-            time.sleep(5)
-                  
