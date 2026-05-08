@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude AI Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .chat-box { height: 70vh; overflow-y: auto; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white font-sans">
+    <div class="max-w-2xl mx-auto mt-10 p-6 bg-gray-800 rounded-lg shadow-xl">
+        <h1 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2">Claude AI Assistant</h1>
+        
+        <div id="chat-box" class="chat-box mb-4 p-4 bg-gray-900 rounded border border-gray-700 flex flex-col gap-4">
+            </div>
+
+        <div class="flex gap-2">
+            <input type="text" id="user-input" placeholder="Kuch poochiye..." 
+                   class="flex-1 p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:border-blue-500">
+            <button onclick="sendMessage()" class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded font-bold">Send</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
